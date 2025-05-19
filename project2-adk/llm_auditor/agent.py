@@ -13,12 +13,13 @@
 # limitations under the License.
 
 """LLM Auditor for verifying & refining LLM-generated answers using the web."""
-
+from dotenv import load_dotenv
 from google.adk.agents import SequentialAgent
 
 from .sub_agents.critic import critic_agent
 from .sub_agents.reviser import reviser_agent
 
+load_dotenv()
 
 llm_auditor = SequentialAgent(
     name='llm_auditor',
