@@ -6,6 +6,10 @@ from google.genai import types
 
 import os
 from dotenv import load_dotenv
+from pydantic import BaseModel, Field
+
+class CountryCapital(BaseModel):
+    capital: str = Field(description="A country's capital.")
 
 # 1. Load environment variables from the agent directory's .env file
 load_dotenv()
@@ -19,6 +23,9 @@ root_agent = Agent(
     model=model_name,
     name="my_agent",
     instruction="Answer questions.",
+    disallow_transfer_to_parent=True,
+    disallow_transfer_to_peers=True,
+    output_schema=CountryCapital,    
 )
 
 # 3. Create Session and Artifact Services and a Session

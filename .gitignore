@@ -175,3 +175,4 @@ cython_debug/
 
 #modified by Doddi Priyambodo
 menv
+.venv
