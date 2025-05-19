@@ -19,3 +19,5 @@ gcloud config set billing/quota_project $GCP_PROJECT
 
 gcloud config list
 gcloud auth list
+
+export PATH=$PATH:"/home/${USER}/.local/bin"
