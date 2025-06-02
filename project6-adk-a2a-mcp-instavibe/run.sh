@@ -1,3 +1,198 @@
+#------ from the Document
+gcloud auth list
+git clone https://github.com/weimeilin79/instavibe-bootstrap.git
+cd instavive-bootstrap
+chmod +x init.sh
+chmod +x set_env.sh
+init.sh 
+gcloud config set project $(cat project_id.txt) --quiet
+export GOOGLE_CLOUD_PROJECT="work-mylab-machinelearning"
+export GOOGLE_CLOUD_LOCATION="us-central1" 
+export GOOGLE_GENAI_USE_VERTEXAI=TRUE
+
+#------ from the Document
+gcloud services enable  run.googleapis.com \
+                        cloudfunctions.googleapis.com \
+                        cloudbuild.googleapis.com \
+                        artifactregistry.googleapis.com \
+                        spanner.googleapis.com \
+                        apikeys.googleapis.com \
+                        iam.googleapis.com \
+                        compute.googleapis.com \
+                        aiplatform.googleapis.com \
+                        cloudresourcemanager.googleapis.com \
+                        maps-backend.googleapis.com
+
+#------ from the Document
+export PROJECT_ID=$(gcloud config get project)
+export PROJECT_NUMBER=$(gcloud projects describe ${PROJECT_ID} --format="value(projectNumber)")
+export SERVICE_ACCOUNT_NAME=$(gcloud compute project-info describe --format="value(defaultServiceAccount)")
+export SPANNER_INSTANCE_ID="instavibe-graph-instance"
+export SPANNER_DATABASE_ID="graphdb"
+export GOOGLE_CLOUD_PROJECT=$(gcloud config get project)
+export GOOGLE_GENAI_USE_VERTEXAI=TRUE
+export GOOGLE_CLOUD_LOCATION="us-central1"
+
+#------ from the Document
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member="serviceAccount:$SERVICE_ACCOUNT_NAME" \
+  --role="roles/spanner.admin"
+
+# Spanner Database User
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member="serviceAccount:$SERVICE_ACCOUNT_NAME" \
+  --role="roles/spanner.databaseUser"
+
+# Artifact Registry Admin
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member="serviceAccount:$SERVICE_ACCOUNT_NAME" \
+  --role="roles/artifactregistry.admin"
+
+# Cloud Build Editor
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member="serviceAccount:$SERVICE_ACCOUNT_NAME" \
+  --role="roles/cloudbuild.builds.editor"
+
+# Cloud Run Admin
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member="serviceAccount:$SERVICE_ACCOUNT_NAME" \
+  --role="roles/run.admin"
+
+# IAM Service Account User
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member="serviceAccount:$SERVICE_ACCOUNT_NAME" \
+  --role="roles/iam.serviceAccountUser"
+
+# Vertex AI User
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member="serviceAccount:$SERVICE_ACCOUNT_NAME" \
+  --role="roles/aiplatform.user"
+
+# Logging Writer (to allow writing logs)
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member="serviceAccount:$SERVICE_ACCOUNT_NAME" \
+  --role="roles/logging.logWriter"
+
+
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member="serviceAccount:$SERVICE_ACCOUNT_NAME" \
+  --role="roles/logging.viewer"
+
+
+export REPO_NAME="introveally-repo"
+gcloud artifacts repositories create $REPO_NAME \
+  --repository-format=docker \
+  --location=us-central1 \
+  --description="Docker repository for InstaVibe workshop"
+
+
+#------ from the Document
+./set_env.sh 
+
+#------ from the Document
+gcloud spanner instances create $SPANNER_INSTANCE_ID \
+  --config=regional-us-central1 \
+  --description="GraphDB Instance InstaVibe" \
+  --processing-units=100 \
+  --edition=ENTERPRISE
+
+gcloud spanner databases create $SPANNER_DATABASE_ID \
+  --instance=$SPANNER_INSTANCE_ID \
+  --database-dialect=GOOGLE_STANDARD_SQL
+
+echo "Granting Spanner read/write access to ${SERVICE_ACCOUNT_NAME} for database ${SPANNER_DATABASE_ID}..."
+
+gcloud spanner databases add-iam-policy-binding ${SPANNER_DATABASE_ID} \
+  --instance=${SPANNER_INSTANCE_ID} \
+  --member="serviceAccount:${SERVICE_ACCOUNT_NAME}" \
+  --role="roles/spanner.databaseUser" \
+  --project=${PROJECT_ID}
+
+#------ from the Document
+./set_env.sh
+python -m venv env
+source env/bin/activate
+pip install -r requirements.txt
+pip install --upgrade pip
+cd instavibe
+python setup.py
+
+#------ from the Document
+./set_env.sh
+export KEY_DISPLAY_NAME="Maps Platform API Key"
+
+GOOGLE_MAPS_KEY_ID=$(gcloud services api-keys list \
+  --project="${PROJECT_ID}" \
+  --filter="displayName='${KEY_DISPLAY_NAME}'" \
+  --format="value(uid)" \
+  --limit=1)
+
+GOOGLE_MAPS_API_KEY=$(gcloud services api-keys get-key-string "${GOOGLE_MAPS_KEY_ID}" \
+    --project="${PROJECT_ID}" \
+    --format="value(keyString)")
+
+echo "${GOOGLE_MAPS_API_KEY}" > mapkey.txt
+
+echo "Retrieved GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY}"
+
+#------ from the Document
+./set_env.sh
+
+cd instavibe/
+export IMAGE_TAG="latest"
+export APP_FOLDER_NAME="instavibe"
+export IMAGE_NAME="instavibe-webapp"
+export IMAGE_PATH="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${IMAGE_TAG}"
+export SERVICE_NAME="instavibe"
+
+gcloud builds submit . \
+  --tag=${IMAGE_PATH} \
+  --project=${PROJECT_ID}
+
+#------ from the Document
+./set_env.sh
+cd instavibe/
+export IMAGE_TAG="latest"
+export APP_FOLDER_NAME="instavibe"
+export IMAGE_NAME="instavibe-webapp"
+export IMAGE_PATH="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${IMAGE_TAG}"
+export SERVICE_NAME="instavibe"
+
+gcloud run deploy ${SERVICE_NAME} \
+  --image=${IMAGE_PATH} \
+  --platform=managed \
+  --region=${REGION} \
+  --allow-unauthenticated \
+  --set-env-vars="SPANNER_INSTANCE_ID=${SPANNER_INSTANCE_ID}" \
+  --set-env-vars="SPANNER_DATABASE_ID=${SPANNER_DATABASE_ID}" \
+  --set-env-vars="APP_HOST=0.0.0.0" \
+  --set-env-vars="APP_PORT=8080" \
+  --set-env-vars="GOOGLE_CLOUD_LOCATION=${REGION}" \
+  --set-env-vars="GOOGLE_CLOUD_PROJECT=${PROJECT_ID}" \
+  --set-env-vars="GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}" \
+  --project=${PROJECT_ID} \
+  --min-instances=1
+
+#------ from the Document
+Service URL: https://instavibe-388889235558.us-central1.run.app
+
+#------ from the Document
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#------- from Doddi Priyambodo (DONOTUSE)
+
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
