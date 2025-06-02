@@ -1,3 +1,5 @@
+source env/bin/activate
+
 #------ from the Document
 gcloud auth list
 git clone https://github.com/weimeilin79/instavibe-bootstrap.git
@@ -177,7 +179,11 @@ gcloud run deploy ${SERVICE_NAME} \
 Service URL: https://instavibe-388889235558.us-central1.run.app
 
 #------ from the Document
-
+./set_env.sh
+source env/bin/activate
+cd  agents
+sed -i "s|^\(O\?GOOGLE_CLOUD_PROJECT\)=.*|GOOGLE_CLOUD_PROJECT=${PROJECT_ID}|" planner/.env
+adk web
 
 
 
