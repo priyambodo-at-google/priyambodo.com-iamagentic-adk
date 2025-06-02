@@ -1,0 +1,4 @@
+python-dotenv
+fire==0.7.0
+google-cloud-aiplatform[adk,agent_engines]==1.88.0
+pysqlite3-binary
