@@ -7,3 +7,5 @@ Designing Agent Interactions & Orchestration: Move beyond single agents to under
 Building Collaborative Multi-Agent Systems: Discover how to architect systems where multiple agents collaborate to achieve complex goals. Learn and implement the Agent-to-Agent (A2A) communication protocol, establishing a standardized way for distributed agents (potentially running on different machines or services) to interact reliably.
 
 Productionizing Agents on Google Cloud: Transition your agent applications from development environments to the cloud. Learn best practices for architecting and deploying scalable, robust multi-agent systems on Google Cloud Platform (GCP). Gain insights into leveraging GCP services like Cloud Run and explore the capabilities of the latest Google Agent Engine for hosting and managing your agents.
+
+Ref: https://codelabs.developers.google.com/instavibe-adk-multi-agents/instructions?hl=en

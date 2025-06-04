@@ -185,16 +185,56 @@ cd  agents
 sed -i "s|^\(O\?GOOGLE_CLOUD_PROJECT\)=.*|GOOGLE_CLOUD_PROJECT=${PROJECT_ID}|" planner/.env
 adk web
 
+#------ from the Document
+./set_env.sh
+source env/bin/activate
+cd agents
+python -m planner.planner_client
 
 
 
+#------ from the Document
+./set_env.sh
 
+cd tools/instavibe
 
+export IMAGE_TAG="latest"
+export MCP_IMAGE_NAME="mcp-tool-server"
+export IMAGE_PATH="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${MCP_IMAGE_NAME}:${IMAGE_TAG}"
+export SERVICE_NAME="mcp-tool-server"
+export INSTAVIBE_BASE_URL=$(gcloud run services list --platform=managed --region=us-central1 --format='value(URL)' | grep instavibe)/api
 
+gcloud builds submit . \
+  --tag=${IMAGE_PATH} \
+  --project=${PROJECT_ID}
 
+gcloud run deploy ${SERVICE_NAME} \
+  --image=${IMAGE_PATH} \
+  --platform=managed \
+  --region=${REGION} \
+  --allow-unauthenticated \
+  --set-env-vars="INSTAVIBE_BASE_URL=${INSTAVIBE_BASE_URL}" \
+  --set-env-vars="APP_HOST=0.0.0.0" \
+  --set-env-vars="APP_PORT=8080" \
+  --set-env-vars="GOOGLE_GENAI_USE_VERTEXAI=TRUE" \
+  --set-env-vars="GOOGLE_CLOUD_LOCATION=${REGION}" \
+  --set-env-vars="GOOGLE_CLOUD_PROJECT=${PROJECT_ID}" \
+  --project=${PROJECT_ID} \
+  --min-instances=1
 
+#------ from the Document
+Service URL: https://mcp-tool-server-388889235558.us-central1.run.app
+export MCP_SERVER_URL=$(gcloud run services list --platform=managed --region=us-central1 --format='value(URL)' | grep mcp-tool-server)/sse
+echo $MCP_SERVER_URL
 
+#------ from the Document
+/set_env.sh
+export MCP_SERVER_URL=$(gcloud run services list --platform=managed --region=us-central1 --format='value(URL)' | grep mcp-tool-server)/sse
 
+cd  agents
+sed -i "s|^\(O\?GOOGLE_CLOUD_PROJECT\)=.*|GOOGLE_CLOUD_PROJECT=${PROJECT_ID}|" platform_mcp_client/.env
+sed -i "s|^\(O\?MCP_SERVER_URL\)=.*|MCP_SERVER_URL=${MCP_SERVER_URL}|" platform_mcp_client/.env
+adk web
 
 
 #------- from Doddi Priyambodo (DONOTUSE)
