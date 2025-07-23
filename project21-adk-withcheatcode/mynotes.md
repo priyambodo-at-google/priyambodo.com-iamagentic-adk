@@ -14,5 +14,10 @@ create .venv as python virtual environment in that folder first
 Now, I want to build an AI agent, leveraging the ADK framework, to help me check what is the stock price right now (ex: Google, Tesla, Amazon, Netflix, etc). It should read realtime stock price from Yahoo Finance. 
 
 *Action:
-Come up with a plan on how to do it. Execute the Plan. Then run the agent locally using the run_local.py script for testing purpose.
-@llms-full.txt
+Come up with a plan on how to do it. Execute the Plan. Then run the agent locally using the run_local.py script for testing purpose. 
+
+*Important Guide:
+For more guidance step by step on how to do it, Please refer to file @llms-full.txt
+
+
+
